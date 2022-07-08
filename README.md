@@ -1,5 +1,5 @@
 # Roompotify
-This is a simple collabrative music playing system called Roompotify.
+This is a simple collabrative music playing system called Roompotify which uses `Spotify` for finding music. Back-end is implemeted in `Django` and front-end is implemented in `React`.
 
 
 ## Frontend packages
