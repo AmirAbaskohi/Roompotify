@@ -1,27 +1,31 @@
 import React, { Component } from "react";
 import { Grid, Button, Typography } from "@material-ui/core";
+import CreateRoomPage from "./CreateRoomPage";
 
 export default class Room extends Component {
   constructor(props) {
-    const location = window.location.href;
     super(props);
     this.state = {
       votesToSkip: 2,
       guestCanPause: false,
       isHost: false,
+      showSettings: false,
     };
-    let splittedLocation = location.split("/");
-    this.roomCode = splittedLocation[splittedLocation.length - 1];
-    this.getRoomDetails();
+    this.roomCode = this.props.match.params.roomCode;
     this.leaveButtonPressed = this.leaveButtonPressed.bind(this);
+    this.updateShowSettings = this.updateShowSettings.bind(this);
+    this.renderSettingsButton = this.renderSettingsButton.bind(this);
+    this.renderSettings = this.renderSettings.bind(this);
+    this.getRoomDetails = this.getRoomDetails.bind(this);
+    this.getRoomDetails();
   }
 
-  getRoomDetails = () => {
+  getRoomDetails() {
     return fetch("/api/get-room" + "?code=" + this.roomCode)
       .then((response) => {
         if (!response.ok) {
-
-          window.location.href = window.location.toString().split("/").slice(0, 3).join("/");
+          this.props.leaveRoomCallback();
+          this.props.history.push("/");
         }
         return response.json();
       })
@@ -40,11 +44,60 @@ export default class Room extends Component {
       headers: { "Content-Type": "application/json" },
     };
     fetch("/api/leave-room", requestOptions).then((_response) => {
-      window.location.href = window.location.toString().split("/").slice(0, 3).join("/");
+      this.props.leaveRoomCallback();
+      this.props.history.push("/");
     });
   }
 
+  updateShowSettings(value) {
+    this.setState({
+      showSettings: value,
+    });
+  }
+
+  renderSettings() {
+    return (
+      <Grid container spacing={1}>
+        <Grid item xs={12} align="center">
+          <CreateRoomPage
+            update={true}
+            votesToSkip={this.state.votesToSkip}
+            guestCanPause={this.state.guestCanPause}
+            roomCode={this.roomCode}
+            updateCallback={this.getRoomDetails}
+          />
+        </Grid>
+        <Grid item xs={12} align="center">
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={() => this.updateShowSettings(false)}
+          >
+            Close
+          </Button>
+        </Grid>
+      </Grid>
+    );
+  }
+
+  renderSettingsButton() {
+    return (
+      <Grid item xs={12} align="center">
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={() => this.updateShowSettings(true)}
+        >
+          Settings
+        </Button>
+      </Grid>
+    );
+  }
+
   render() {
+    if (this.state.showSettings) {
+      return this.renderSettings();
+    }
     return (
       <Grid container spacing={1}>
         <Grid item xs={12} align="center">
@@ -67,6 +120,7 @@ export default class Room extends Component {
             Host: {this.state.isHost.toString()}
           </Typography>
         </Grid>
+        {this.state.isHost ? this.renderSettingsButton() : null}
         <Grid item xs={12} align="center">
           <Button
             variant="contained"
